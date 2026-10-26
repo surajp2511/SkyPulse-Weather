@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SkyPulse Weather - Real-time global weather app with live API testing, temperature, humidity, wind speed, and meteorological data.">
+    <title>SkyPulse Weather - Real-time Forecast & API Lab</title>
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <!-- App Header & Live Status -->
+        <header class="app-header">
+            <div class="brand-wrapper">
+                <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                </svg>
+                <h1 class="app-title">SkyPulse Weather</h1>
+            </div>
+            <div class="app-subtitle">
+                <span>Real-Time Forecast</span>
+                <span class="live-badge">
+                    <span class="pulse-dot"></span>
+                    API Connected
+                </span>
+            </div>
+        </header>
+
+        <!-- Search Bar & Quick City Shortcuts -->
+        <section class="search-card" aria-label="City Search">
+            <form id="searchForm" class="search-form">
+                <input 
+                    type="text" 
+                    id="cityInput" 
+                    class="search-input" 
+                    placeholder="Enter city name (e.g. London, Tokyo, Delhi)..." 
+                    autocomplete="off"
+                    required
+                />
+                <button type="submit" id="searchBtn" class="search-btn" aria-label="Search City">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="quick-cities">
+                <span class="quick-cities-label">Popular:</span>
+                <button type="button" class="city-chip" data-city="London">London</button>
+                <button type="button" class="city-chip" data-city="New York">New York</button>
+                <button type="button" class="city-chip" data-city="Tokyo">Tokyo</button>
+                <button type="button" class="city-chip" data-city="Paris">Paris</button>
+                <button type="button" class="city-chip" data-city="Mumbai">Mumbai</button>
+                <button type="button" class="city-chip" data-city="Dubai">Dubai</button>
+            </div>
+        </section>
+
+        <!-- Error Alert Banner -->
+        <div id="errorBanner" class="error-banner" role="alert">
+            <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div class="error-content">
+                <strong>Request Failed</strong>
+                <span id="errorMessage">City not found. Please try again.</span>
+            </div>
+        </div>
+
+        <!-- Main Weather Display Card -->
+        <article class="weather-card" id="weatherCard">
+            
+            <!-- Loading Spinner Overlay -->
+            <div id="loadingOverlay" class="loading-overlay">
+                <div class="spinner"></div>
+                <span class="loading-text">Fetching latest weather data...</span>
+            </div>
+
+            <!-- Card Header: City, Country & Units Switcher -->
+            <div class="weather-header">
+                <div>
+                    <div class="city-location">
+                        <svg class="location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <h2 id="cityName" class="city-name">Loading...</h2>
+                        <span id="countryCode" class="country-pill">--</span>
+                    </div>
+                    <p id="currentDate" class="date-text">--</p>
+                </div>
+
+                <!-- Unit Switcher -->
+                <div class="unit-toggle" aria-label="Temperature Units">
+                    <button id="unitCelsius" class="unit-btn active" title="Celsius">°C</button>
+                    <button id="unitFahrenheit" class="unit-btn" title="Fahrenheit">°F</button>
+                </div>
+            </div>
+
+            <!-- Hero Section: Weather Icon & Temperature -->
+            <div class="weather-hero">
+                <div class="weather-icon-wrapper">
+                    <div class="weather-icon-glow"></div>
+                    <img id="weatherIcon" class="weather-icon" src="https://openweathermap.org/img/wn/10d@4x.png" alt="Weather condition icon" />
+                </div>
+                
+                <div class="temp-container">
+                    <span id="temperature" class="temperature">--</span>
+                    <span id="tempUnit" class="temp-unit">°C</span>
+                </div>
+                
+                <h3 id="weatherCondition" class="weather-condition">--</h3>
+                <p class="temp-range">
+                    <span id="tempMin">L: --°</span> &bull; <span id="tempMax">H: --°</span>
+                </p>
+            </div>
+
+            <!-- Parameters Grid (Humidity, Wind, Feels Like, Pressure, Visibility, Sun) -->
+            <div class="weather-details-grid">
+                
+                <!-- Humidity -->
+                <div class="detail-card">
+                    <div class="detail-icon-box humidity-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                        </svg>
+                    </div>
+                    <div class="detail-info">
+                        <span id="humidity" class="detail-value">--%</span>
+                        <span class="detail-label">Humidity</span>
+                    </div>
+                </div>
+
+                <!-- Wind Speed -->
+                <div class="detail-card">
+                    <div class="detail-icon-box wind-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/>
+                            <path d="M9.6 4.6A2 2 0 1 1 11 8H2"/>
+                            <path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>
+                        </svg>
+                    </div>
+                    <div class="detail-info">
+                        <span id="windSpeed" class="detail-value">-- km/h</span>
+                        <span class="detail-label">Wind Speed</span>
+                    </div>
+                </div>
+
+                <!-- Feels Like -->
+                <div class="detail-card">
+                    <div class="detail-icon-box feels-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>
+                        </svg>
+                    </div>
+                    <div class="detail-info">
+                        <span id="feelsLike" class="detail-value">--°C</span>
+                        <span class="detail-label">Feels Like</span>
+                    </div>
+                </div>
+
+                <!-- Pressure -->
+                <div class="detail-card">
+                    <div class="detail-icon-box pressure-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="m16 12-4-4-4 4"/>
+                            <path d="M12 16V8"/>
+                        </svg>
+                    </div>
+                    <div class="detail-info">
+                        <span id="pressure" class="detail-value">-- hPa</span>
+                        <span class="detail-label">Pressure</span>
+                    </div>
+                </div>
+
+                <!-- Visibility -->
+                <div class="detail-card">
+                    <div class="detail-icon-box visibility-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </div>
+                    <div class="detail-info">
+                        <span id="visibility" class="detail-value">-- km</span>
+                        <span class="detail-label">Visibility</span>
+                    </div>
+                </div>
+
+                <!-- Sunrise / Sunset -->
+                <div class="detail-card">
+                    <div class="detail-icon-box sun-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v2"/>
+                            <path d="M12 20v2"/>
+                            <path d="m4.93 4.93 1.41 1.41"/>
+                            <path d="m17.66 17.66 1.41 1.41"/>
+                            <path d="M2 12h2"/>
+                            <path d="M20 12h2"/>
+                            <circle cx="12" cy="12" r="4"/>
+                        </svg>
+                    </div>
+                    <div class="detail-info">
+                        <span id="sunrise" class="detail-value">--:-- AM</span>
+                        <span class="detail-label">Sunrise</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </article>
+
+        <!-- API Inspector & Testing Lab (Educational & Debugging drawer) -->
+        <section class="api-inspector-card" id="apiInspectorCard">
+            <div class="api-inspector-header" id="apiInspectorHeader">
+                <div class="api-title-group">
+                    <span class="api-pill">LAB</span>
+                    <h4 class="api-inspector-title">API Inspector & Key Tester</h4>
+                </div>
+                <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+
+            <div class="api-inspector-body">
+                
+                <!-- Status & Latency Badges -->
+                <div class="api-info-bar">
+                    <span class="method-tag">METHOD: GET</span>
+                    <span id="apiStatusCode" class="status-tag">200 OK</span>
+                    <span id="apiLatency" class="latency-tag">-- ms</span>
+                </div>
+
+                <!-- Live Request URL Box -->
+                <div class="api-url-box">
+                    <span id="apiUrlDisplay">Loading API URL...</span>
+                    <a id="openInBrowserLink" class="open-link-btn" href="#" target="_blank" rel="noopener">
+                        Open in New Tab &nearr;
+                    </a>
+                </div>
+
+                <!-- API Key Tester Input -->
+                <div class="api-key-test-row">
+                    <label for="customApiKeyInput" class="api-key-label">Test Another API Key:</label>
+                    <div class="api-key-input-group">
+                        <input type="text" id="customApiKeyInput" class="api-key-input" placeholder="Paste another API key to test..." />
+                        <button type="button" id="applyKeyBtn" class="apply-key-btn">Apply &amp; Test</button>
+                    </div>
+                </div>
+
+                <!-- Raw JSON Output Preview -->
+                <div class="json-viewer-header">
+                    <span class="json-title">Raw JSON Response from OpenWeatherMap:</span>
+                    <button type="button" id="copyJsonBtn" class="copy-json-btn">Copy JSON</button>
+                </div>
+                <pre id="jsonOutput" class="json-code-box">Waiting for request...</pre>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Script -->
+    <script src="app.js"></script>
+</body>
+</html>
